@@ -1,3 +1,5 @@
+from __future__ import division
+
 import wiringpi
 
 # Global Constants
@@ -15,6 +17,10 @@ IN3 = 4
 IN4 =5
 ENB =23
 
+MOBOT_AXIS = 24 # In centimeter
+
+CRUISE_SPEED = 99
+
 def init():
     #print(wiringpi.piBoardRev())
     wiringpi.wiringPiSetup()
@@ -31,12 +37,14 @@ def init():
     wiringpi.softPwmCreate(ENB, 0, 100)
 
 def go_ahead():
+    go_stop()
     wiringpi.digitalWrite(IN1, LOW)
     wiringpi.digitalWrite(IN2, HIGH)
     wiringpi.digitalWrite(IN3, LOW)
     wiringpi.digitalWrite(IN4, HIGH)
 
 def go_back():
+    go_stop()
     wiringpi.digitalWrite(IN1, HIGH)
     wiringpi.digitalWrite(IN2, LOW)
     wiringpi.digitalWrite(IN3, HIGH)
@@ -48,42 +56,59 @@ def go_stop():
     wiringpi.digitalWrite(IN3, LOW)
     wiringpi.digitalWrite(IN4, LOW)
 
-def turn_left():
+def rotate_left():
+    go_stop()
     wiringpi.digitalWrite(IN1, HIGH)
     wiringpi.digitalWrite(IN2, LOW)
     wiringpi.digitalWrite(IN3, LOW)
     wiringpi.digitalWrite(IN4, HIGH)
 
-def turn_right():
+def rotate_right():
+    go_stop()
     wiringpi.digitalWrite(IN1, LOW)
     wiringpi.digitalWrite(IN2, HIGH)
     wiringpi.digitalWrite(IN3, HIGH)
     wiringpi.digitalWrite(IN4, LOW)
+
+def turning_ratio(radius):
+    ratio = (radius + MOBOT_AXIS) / radius
+
+def turn_left(radius):
+    go_stop()
+    ratio = turning_ratio(radius)
+    lspeed = int(ratio * CRUISE_SPEED)
+    wiringpi.softPwmWrite(ENA, lspeed)
+    wiringpi.softPwmWrite(ENB, CRUISE_SPEED)
+    wiringpi.digitalWrite(IN1, LOW)
+    wiringpi.digitalWrite(IN2, HIGH)
+    wiringpi.digitalWrite(IN3, LOW)
+    wiringpi.digitalWrite(IN4, HIGH)
+
+def turn_right(radius):
+    go_stop()
+    ratio = turning_ratio(radius)
+    rspeed = int(ratio * CRUISE_SPEED)
+    wiringpi.softPwmWrite(ENA, CRUISE_SPEED)
+    wiringpi.softPwmWrite(ENB, rspeed)
+    wiringpi.digitalWrite(IN1, LOW)
+    wiringpi.digitalWrite(IN2, HIGH)
+    wiringpi.digitalWrite(IN3, LOW)
+    wiringpi.digitalWrite(IN4, HIGH)
 
 def set_motorspeed(lspeed, rspeed):
     if (lspeed >= 0) and (lspeed < 100):
         wiringpi.softPwmWrite(ENA, lspeed)
     if (rspeed >= 0) and (rspeed < 100):
         wiringpi.softPwmWrite(ENB, rspeed)
-        pass
+    else:
+        raise ValueError("Speed Range is 0 ~ 100")
 
 def start():
-    set_motorspeed(99, 99)
+    set_motorspeed(CRUISE_SPEED, CRUISE_SPEED)
     go_ahead()
 
 # Test
 init()
-go_stop()
 start()
 wiringpi.delay(2000)
 go_stop()
-#turn_left()
-#wiringpi.delay(2000)
-#go_stop()
-#turn_right()
-#wiringpi.delay(2000)
-#go_stop()
-#set_motorspeed(50, 50)
-#go_back()
-#wiringpi.delay(2000)
-#go_stop()
