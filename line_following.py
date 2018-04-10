@@ -146,7 +146,6 @@ def decide_way(img):
     rmean=int(math.floor(np.mean(coor[:,0])))
     cmean=int(math.floor(np.mean(coor[:,1])))
     col=img.shape[1]/2
-    print col
     if(cmean<col-30):
         command='Left'
     elif(cmean>col+30):
@@ -177,11 +176,4 @@ for filename in os.listdir(folder):
     img=cv2.imread(os.path.join(folder,filename))
     img=decide_way(img)
     cv2.imwrite(filename,img)
-    #cv2.imread('mobot/2.jpg')#17  10
 
-    kernel=np.ones((30,30),np.float32)/900
-'''
-#cv2.imshow('frame',img)
-#cv2.waitKey(0);
-#cv2.destroyAllWindows()
-'''
