@@ -154,21 +154,21 @@ def decide_way(img):
         command='Straight'
     cv2.putText(img,command, (10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
     cv2.rectangle(img,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
-    return img
+    return command,img
 
-'''
+
 cap=cv2.VideoCapture(0)
 while(True):
     ret,frame=cap.read()
-    img=decide_way(frame)
+    command,img=decide_way(frame)
     cv2.imshow('frame',img)
     if cv2.waitKey(1) & 0xFF==ord('q'):
         break
 
 cap.release()
 cv2.destroyAllWindows()
-'''
 
+'''
 folder='mobot/'
 count=0
 for filename in os.listdir(folder):
@@ -176,4 +176,5 @@ for filename in os.listdir(folder):
     img=cv2.imread(os.path.join(folder,filename))
     img=decide_way(img)
     cv2.imwrite(filename,img)
+'''
 
