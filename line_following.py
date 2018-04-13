@@ -78,8 +78,8 @@ def mag_thresh(img, sobel_kernel=3, mag_thresh=(0, 255)):
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
     gradmag = np.sqrt(sobelx**2 + sobely**2)
-    scale_factor = np.max(gradmag)/255 
-    gradmag = (gradmag/scale_factor).astype(np.uint8) 
+    scale_factor = np.max(gradmag)/255
+    gradmag = (gradmag/scale_factor).astype(np.uint8)
     binary_output = np.zeros_like(gradmag)
     binary_output[(gradmag >= mag_thresh[0]) & (gradmag <= mag_thresh[1])] = 1
     return binary_output
@@ -137,14 +137,19 @@ def thresholding(img):
     luv_thresh = luv_select(img, thresh=(170, 255))
     threshholded = np.zeros_like(hls_thresh)
     threshholded[((hls_thresh == 1) & (lab_thresh == 1)) & (luv_thresh==1)]=255
+    cv2.imshow("threshed", threshholded)
     return threshholded
 
 def decide_way(img):
     img=cv2.GaussianBlur(img,(5,5),0)
     blur=thresholding(img)
     coor=np.argwhere(blur==255)
-    rmean=int(math.floor(np.mean(coor[:,0])))
-    cmean=int(math.floor(np.mean(coor[:,1])))
+    if len(coor) == 0:
+        rmean = img.shape[0]/2
+        cmean = img.shape[1]/2
+    else:
+        rmean=int(math.floor(np.mean(coor[:,0])))
+        cmean=int(math.floor(np.mean(coor[:,1])))
     col=img.shape[1]/2
     if(cmean<col-30):
         command='Left'
@@ -157,7 +162,7 @@ def decide_way(img):
     return command,img
 
 
-cap=cv2.VideoCapture(0)
+cap=cv2.VideoCapture('./videos/out.h264')
 while(True):
     ret,frame=cap.read()
     command,img=decide_way(frame)
@@ -177,4 +182,3 @@ for filename in os.listdir(folder):
     img=decide_way(img)
     cv2.imwrite(filename,img)
 '''
-
