@@ -161,17 +161,25 @@ def decide_way(img):
     cv2.rectangle(img,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
     return command,img
 
+def capture_and_decide():
+    cap = cv2.VideoCapture(0)
+    ret, frame = cap.read()
+    cap.release()
+    cv2.imshow(" ", frame)
+    command, img = decide_way(frame)
+    return command
 
-cap=cv2.VideoCapture('./videos/out.h264')
-while(True):
-    ret,frame=cap.read()
-    command,img=decide_way(frame)
-    cv2.imshow('frame',img)
-    if cv2.waitKey(1) & 0xFF==ord('q'):
-        break
 
-cap.release()
-cv2.destroyAllWindows()
+# cap=cv2.VideoCapture('./videos/out.h264')
+# while(True):
+#     ret,frame=cap.read()
+#     command,img=decide_way(frame)
+#     cv2.imshow('frame',img)
+#     if cv2.waitKey(1) & 0xFF==ord('q'):
+#         break
+
+# cap.release()
+# cv2.destroyAllWindows()
 
 '''
 folder='mobot/'
