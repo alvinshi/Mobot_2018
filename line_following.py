@@ -157,16 +157,18 @@ def decide_way(img):
         command='Right'
     else:
         command='Straight'
-    cv2.putText(img,command, (10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
-    cv2.rectangle(img,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
-    return command,img
+    #cv2.putText(img,command, (10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
+    #cv2.rectangle(img,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
+    return command,img, blur
 
-def capture_and_decide():
+def capture_and_decide(filename):
     cap = cv2.VideoCapture(0)
     ret, frame = cap.read()
     cap.release()
-    cv2.imshow(" ", frame)
-    command, img = decide_way(frame)
+    command, img, blur = decide_way(frame)
+    cv2.imwrite(filename + "-input", img)
+    cv2.imwrite(filename + "-output", blur)
+    print(command)
     return command
 
 
