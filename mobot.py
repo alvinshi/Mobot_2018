@@ -23,6 +23,8 @@ class Mobot:
 		self.CRUISE_SPEED = CRUISE_SPEED
 
 		self.init_gpio()
+                self.lled = 0
+                self.rled = 0
 
 	def init_gpio(self):
 		wiringpi.wiringPiSetup()
@@ -36,9 +38,22 @@ class Mobot:
 		#Setup PWM using Pin, Initial Value and Range Parameters
 		wiringpi.softPwmCreate(self.ENA, 0, 100)
 		wiringpi.softPwmCreate(self.ENB, 0, 100)
+
+                #LED
+                wiringpi.pinMode(self.LEDL, self.OUTPUT)
+                wiringpi.pinMode(self.LEDR, self.OUTPUT)
+                
 		self.lspeed = 0
 		self.rspeed = 0
 		self.state = "Waiting"
+
+        def toggle_led_left(self):
+                self.lled = not self.lled
+                wiringpi.digitalWrite(self.LEDL, self.lled)
+
+        def toggle_led_right(self):
+                self.rled = not self.rled
+                wiringpi.digitalWrite(self.LEDR, self.rled)
 
 	def go_ahead(self):
 		self.go_stop()

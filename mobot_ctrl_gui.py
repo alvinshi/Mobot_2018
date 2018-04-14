@@ -27,8 +27,12 @@ def keyPressed(event, data, root):
         data.mobot.speed_up()
     elif keysymText == "l":
         data.mobot.speed_down()
+    elif keysymText == "n":
+        data.mobot.toggle_led_left()
+    elif keysymText == "m":
+        data.mobot.toggle_led_right()
     else:
-        root.destory()
+        root.quit()
 
 def redrawAll(canvas, data):
 	canvas.create_text(data.width/8, data.height/4, text="State: " + data.mobot.state)
