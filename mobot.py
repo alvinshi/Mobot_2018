@@ -3,7 +3,7 @@ import wiringpi
 class Mobot:
 	INPUT = 0
 	OUTPUT = 1
-	PWN_OUTPUT = 2
+	PWM_OUTPUT = 2
 
 	HIGH = 1
 	LOW = 0
@@ -22,7 +22,7 @@ class Mobot:
 		self.MOBOT_AXIS = 24 # In centimeter
 		self.CRUISE_SPEED = CRUISE_SPEED
 
-		self.init_gpip()
+		self.init_gpio()
 
 	def init_gpio(self):
 		wiringpi.wiringPiSetup()
@@ -51,7 +51,7 @@ class Mobot:
 		self.state = "Forward"
 
 	def go_back(self):
-		go_stop()
+		self.go_stop()
 		speed = max(self.lspeed, self.rspeed)
 		self.set_motorspeed(speed, speed)
 		wiringpi.digitalWrite(self.IN1, self.HIGH)
@@ -89,11 +89,12 @@ class Mobot:
 
 	def turning_ratio(self, radius):
 		ratio = (float(radius + self.MOBOT_AXIS)) / radius
+                return ratio
 
-	def turn_left(self, radius = 100):
-		go_stop()
+	def turn_left(self, radius = 30):
+		self.go_stop()
 		ratio = self.turning_ratio(radius)
-		lspeed = int(ratio * self.rspeed)
+		lspeed = int(self.rspeed / ratio)
 		self.set_motorspeed(lspeed, self.rspeed)
 		wiringpi.digitalWrite(self.IN1, self.LOW)
 		wiringpi.digitalWrite(self.IN2, self.HIGH)
@@ -101,15 +102,15 @@ class Mobot:
 		wiringpi.digitalWrite(self.IN4, self.HIGH)
 		self.state = "Turning Left"
 
-	def turn_right(self, radius = 100):
-		go_stop()
+	def turn_right(self, radius = 30):
+		self.go_stop()
 		ratio = self.turning_ratio(radius)
-		rspeed = int(ratio * self.lspeed)
+		rspeed = int(self.lspeed / ratio)
 		self.set_motorspeed(self.lspeed, rspeed)
-		wiringpi.digitalWrite(IN1, LOW)
-		wiringpi.digitalWrite(IN2, HIGH)
-		wiringpi.digitalWrite(IN3, LOW)
-		wiringpi.digitalWrite(IN4, HIGH)
+		wiringpi.digitalWrite(self.IN1, self.LOW)
+		wiringpi.digitalWrite(self.IN2, self.HIGH)
+		wiringpi.digitalWrite(self.IN3, self.LOW)
+		wiringpi.digitalWrite(self.IN4, self.HIGH)
 		self.state = "Turning Right"
 
 	def set_motorspeed(self, lspeed, rspeed):
