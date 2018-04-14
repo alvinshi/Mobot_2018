@@ -1,5 +1,7 @@
 from Tkinter import *
+
 from mobot import *
+import line_following as lf
 
 ####################################
 # customize these functions
@@ -34,6 +36,12 @@ def keyPressed(event, data, root):
     else:
         root.quit()
 
+def timerFired(data):
+    command = lf.capture_and_decide()
+    if command == "Straight": data.mobot.go_ahead()
+    elif command == "Left": data.mobot.turn_left()
+    elif command == "Right": data.mobot.turn_right()
+
 def redrawAll(canvas, data):
 	canvas.create_text(data.width/8, data.height/4, text="State: " + data.mobot.state)
 	canvas.create_text(data.width/8, data.height/4 * 2, text="Left Wheel Speed: " + str(data.mobot.lspeed))
@@ -42,7 +50,7 @@ def redrawAll(canvas, data):
 # use the run function as-is
 ####################################
 
-def run(width=300, height=300):
+def run(width=300, height=300, cv = True):
     def redrawAllWrapper(canvas, data):
         canvas.delete(ALL)
         canvas.create_rectangle(0, 0, data.width, data.height,
@@ -54,11 +62,18 @@ def run(width=300, height=300):
         keyPressed(event, data, root)
         redrawAllWrapper(canvas, data)
 
+    def timerFiredWrapper(canvas, data):
+        timerFired(data)
+        redrawAllWrapper(canvas, data)
+        # pause, then call timerFired again
+        canvas.after(data.timerDelay, timerFiredWrapper, canvas, data)
+
     # Set up data and call init
     class Struct(object): pass
     data = Struct()
     data.width = width
     data.height = height
+    data.timerDelay = 50
     root = Tk()
     init(data)
     # create the root and the canvas
@@ -68,7 +83,8 @@ def run(width=300, height=300):
     root.bind("<Key>", lambda event:
                             keyPressedWrapper(event, canvas, data, root))
     redrawAll(canvas, data)
+    if cv: timerFiredWrapper(canvas, data)
     # and launch the app
     root.mainloop()  # blocks until window is closed
 
-run(400, 200)
+run(400, 200, False)
