@@ -106,7 +106,7 @@ class Mobot:
 		ratio = (float(radius + self.MOBOT_AXIS)) / radius
                 return ratio
 
-	def turn_left(self, radius = 30):
+	def turn_left(self, radius = 20):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
 		lspeed = int(self.rspeed / ratio)
@@ -117,7 +117,7 @@ class Mobot:
 		wiringpi.digitalWrite(self.IN4, self.HIGH)
 		self.state = "Turning Left"
 
-	def turn_right(self, radius = 30):
+	def turn_right(self, radius = 20):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
 		rspeed = int(self.lspeed / ratio)

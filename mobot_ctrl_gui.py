@@ -9,6 +9,7 @@ import line_following as lf
 
 def init(data):
     data.mobot = Mobot()
+    data.cv_command = ""
 
 def keyPressed(event, data, root):
     charText = event.char
@@ -37,15 +38,19 @@ def keyPressed(event, data, root):
         root.quit()
 
 def timerFired(data):
-    command = lf.capture_and_decide()
+    data.seq = data.seq + 1
+    command = lf.capture_and_decide(str(data.seq) + ".jpg")
+    data.cv_command = command
     if command == "Straight": data.mobot.go_ahead()
     elif command == "Left": data.mobot.turn_left()
     elif command == "Right": data.mobot.turn_right()
 
 def redrawAll(canvas, data):
-	canvas.create_text(data.width/8, data.height/4, text="State: " + data.mobot.state)
-	canvas.create_text(data.width/8, data.height/4 * 2, text="Left Wheel Speed: " + str(data.mobot.lspeed))
-	canvas.create_text(data.width/8, data.height/4 * 3, text="Right Wheel Speed: " + str(data.mobot.rspeed))
+    canvas.create_text(data.width/8, data.height/5, text="State: " + data.mobot.state)
+    canvas.create_text(data.width/8, data.height/5 * 2, text="Left Wheel Speed: " + str(data.mobot.lspeed))
+    canvas.create_text(data.width/8, data.height/5 * 3, text="Right Wheel Speed: " + str(data.mobot.rspeed))
+    canvas.create_text(data.width/8, data.height/5 * 4, text="CV Command: " + data.cv_command)
+        
 ####################################
 # use the run function as-is
 ####################################
@@ -73,7 +78,8 @@ def run(width=300, height=300, cv = True):
     data = Struct()
     data.width = width
     data.height = height
-    data.timerDelay = 50
+    data.timerDelay = 200
+    data.seq = 0
     root = Tk()
     init(data)
     # create the root and the canvas
@@ -83,8 +89,9 @@ def run(width=300, height=300, cv = True):
     root.bind("<Key>", lambda event:
                             keyPressedWrapper(event, canvas, data, root))
     redrawAll(canvas, data)
+    data.mobot.start()
     if cv: timerFiredWrapper(canvas, data)
     # and launch the app
     root.mainloop()  # blocks until window is closed
 
-run(400, 200, False)
+run(400, 200, True)
