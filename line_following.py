@@ -37,7 +37,7 @@ def double_raster(img):
                 if(row>0):
                     up=img[row-1][col]
                 else:
-                    up=0;
+                    up=0
                 if(col>0):
                     left=img[row,col-1]
                 else:
@@ -56,10 +56,11 @@ def double_raster(img):
                 elif(up==0 or left==0):
                     img[row][col]=max(up,left)
     for r in range(0,len(img)):
-        for c in range(0,len(img[row])):
-            if(img[row][col]!=0):
-                if(eq[img[row][col]]!=0):
-                    img[row][col]=eq[img[row][col]]
+        for c in range(0,len(img[r])):
+            if(img[r][c]!=0):
+                if(eq[img[r][c]]!=0):
+                    img[r][c]=eq[img[r][c]]
+
     return img
 
 def sobel_thresh(img,orient='x',min=0,max=255):
@@ -106,8 +107,6 @@ def lab_select(img, thresh=(0, 255)):
     binary_output = np.zeros_like(l_channel)
     binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
     return binary_output
-
-
 
 def hls_select(img,channel='s',thresh=(0, 255)):
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
