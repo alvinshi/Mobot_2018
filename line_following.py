@@ -3,34 +3,16 @@ import cv2
 import copy
 import math
 import os
+import time
 
-threshold=100
-
-def extract_line(img):
-    for row in range(0,len(img)):
-        for col in range(0,len(img[row])):
-            if(img[row][col]>150):
-                img[row][col]=255
-            else:
-                img[row][col]=0
-    return img
-
-def extract_white(new):
-    for row in range(0,len(new)):
-        for col in range(0,len(new[row])):
-            if(img[row][col][2]<200 or img[row][col][1]<200
-                    and img[row][col][0]<200):
-                new[row][col][2]=0
-                new[row][col][1]=0
-                new[row][col][0]=0
-    return new
-
-def double_raster(img):
+def double_raster(imgTakein, startRow):
+    # take in binary image; startRow is the start row of the current image slice
+    img = normalize(imgTakein)
     cur_label=2
+    coordinates = [None] * 50
     eq=[]
     for i in range(0,len(img)*len(img[0])):
         eq.append(0)
-
     for row in range(0,len(img)):
         for col in range(0,len(img[row])):
             if(img[row][col]==1):
@@ -55,13 +37,31 @@ def double_raster(img):
                             a=eq[a]
                 elif(up==0 or left==0):
                     img[row][col]=max(up,left)
-    for r in range(0,len(img)):
-        for c in range(0,len(img[r])):
-            if(img[r][c]!=0):
-                if(eq[img[r][c]]!=0):
-                    img[r][c]=eq[img[r][c]]
 
-    return img
+    # changed nested for loop of the second sweep to below, faster for 5-6 second
+    max_label = cur_label   # record the max label number
+    labelPixNumber = [0] * max_label    # The number of pixels in each label
+    coorAdded = False   # switch of whether the coordinates has been recorded
+    for label in range(0, max_label):
+        labelCoor = np.argwhere(img == label)   # get the coordinates of pixels with same label
+        coorNum = len(labelCoor)
+        labelPixNumber[label] = coorNum
+        if (eq[label] != 0):
+            eqLabel = eq[label]
+            img = eqLabel * (img == label) + img
+            # Add the number of pixels of the current label to the equiv label
+            # and set the current label pixel number to 0
+            labelPixNumber[eqLabel] = labelPixNumber[eqLabel] + labelPixNumber[label]
+            labelPixNumber[label] = 0
+            addCoordinates(coorNum, eqLabel, labelCoor, startRow, coordinates)
+            coorAdded = True
+        if not coorAdded:
+            addCoordinates(coorNum, label, labelCoor, startRow, coordinates)
+        coorAdded = False
+
+    centers = get_center(coordinates)
+    #print("finished double raster for one slice of image")
+    return centers
 
 def sobel_thresh(img,orient='x',min=0,max=255):
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -94,56 +94,178 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     binary_output[(absgraddir >= thresh[0]) & (absgraddir <= thresh[1])] = 1
     return binary_output
 
-def luv_select(img, thresh=(0, 255)):
+def luv_select(img, channel='l',thresh=(0, 255)):
     luv = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
     l_channel = luv[:,:,0]
+    u_channel=luv[:,:,1]
+    v_channel=luv[:,:,2]
     binary_output = np.zeros_like(l_channel)
-    binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    if(channel=='l'):
+        binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    elif(channel=='u'):
+        binary_output[(u_channel > thresh[0]) & (u_channel <= thresh[1])] = 1
+    else:
+        binary_output[(v_channel > thresh[0]) & (v_channel <= thresh[1])] = 1
     return binary_output
 
-def lab_select(img, thresh=(0, 255)):
+def lab_select(img, channel='l',thresh=(0, 255)):
     lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
     l_channel = lab[:,:,0]
+    a_channel=lab[:,:,1]
+    b_channel=lab[:,:,2]
     binary_output = np.zeros_like(l_channel)
-    binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    if(channel=='l'):
+        binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    elif(channel=='a'):
+        binary_output[(a_channel > thresh[0]) & (a_channel <= thresh[1])] = 1
+    else:
+        binary_output[(b_channel > thresh[0]) & (b_channel <= thresh[1])] = 1
     return binary_output
 
 def hls_select(img,channel='l',thresh=(0, 255)):
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+    h_channel = hls[:,:,0]
+    l_channel=hls[:,:,1]
+    s_channel=hls[:,:,2] 
+    binary_output = np.zeros_like(l_channel)
     if channel=='h':
-        channel = hls[:,:,0]
+        binary_output[(h_channel > thresh[0]) & (h_channel< thresh[1])] = 1
     elif channel=='l':
-        channel=hls[:,:,1]
+        binary_output[(l_channel > thresh[0]) & (l_channel< thresh[1])] = 1
     else:
-        channel=hls[:,:,2]
-    binary_output = np.zeros_like(channel)
-    binary_output[(channel < thresh[0]) | (channel> thresh[1])] = 1
+        binary_output[(s_channel < thresh[0]) | (s_channel> thresh[1])] = 1
     return binary_output
 
 def rgb_select(img,thresh=(0,255)):
-    ch=img[:,:,2]
-    binary_output=np.zeros_like(ch)
-    binary_output[(ch>thresh[0])&(ch<thresh[1])]=1
+    b=img[:,:,0]
+    g=img[:,:,1]
+    r=img[:,:,2]
+    binary_output=np.zeros_like(r)
+    binary_output[(b>thresh[0])&(b<thresh[1])&(g>thresh[0])&(g<thresh[1])&(r>thresh[0])&(r<thresh[1])]=1
     return binary_output
 
+def get_middle(img):
+    rowNum = img.shape[0]
+    colNum = img.shape[1]
+    rowInterval = rowNum//4
+    colInterval = colNum//4
+    midRow = rowNum//2
+    midCol = colNum//2
+    # Take the middle one third of the image
+    croppedImg = img[0:rowNum, midCol-colInterval:midCol+colInterval]
+    return croppedImg
+
+# Dilation to expand white line after thresholding
+def dilation(img):
+    kernel = np.ones((17,17), np.uint8)
+    img_dilation = cv2.dilate(img, kernel, iterations=1)
+    return img_dilation
+
+def normalize(img):
+    normalizeImg = np.zeros_like(img)
+    normalizeImg[img == 255] = 1
+    return normalizeImg
+
+def get_center(coordinates):
+    index = 0
+    centers = []
+    while coordinates[index] != None:
+        sums = [0,0]
+        for i in coordinates[index]:
+            (row, col) = i
+            sums[0] = sums[0] + row
+            sums[1] = sums[1] + col
+        sums[0] = int(math.floor(sums[0] / len(coordinates[index])))
+        sums[1] = int(math.floor(sums[1] / len(coordinates[index])))
+        centers.append(tuple(sums))
+        index = index + 1
+    return centers
+
+# Switch the row and col for the drawing function
+def switchRowCol(origCoor):
+    col = origCoor[1]
+    row = origCoor[0]
+    return [col, row]
+
+# add the coordinates of same label to "coordinates"
+def addCoordinates(coorNum, label, labelCoor, startRow, coordinates):
+       for index in range(0, coorNum):
+        labelCoor[index][0] = labelCoor[index][0] + startRow
+        labelCoorT = switchRowCol(labelCoor[index])
+        #print(label-2)
+        if coordinates[label-2] != None:
+            coordinates[label-2].append(labelCoorT)
+        else:
+            coordinates[label-2] = [labelCoorT]
+
+def row_segment_centor(img, NUM_SEGS):
+    # Segment the original image into 20 segments
+    numSegs = NUM_SEGS
+    numRows = img.shape[0]
+    numCols = img.shape[1]
+    rowInterval = numRows//numSegs
+    segmentCentors = [None] * numSegs
+    blockCenters = []
+    startRow = 0
+    for i in range(0, numSegs):
+        imgSeg = img[startRow:startRow+rowInterval, 0:numCols]
+        # Threshold imageSegments and calculate the centor of each segments
+        imgSegThreshed = thresholding(imgSeg)
+        coor = np.argwhere(imgSegThreshed == 255)
+        if len(coor) == 0:
+            rmean = img.shape[0]//2
+            cmean = img.shape[1]//2
+        else:
+            rmean=int(math.floor(np.mean(coor[:,0])))
+            cmean=int(math.floor(np.mean(coor[:,1])))
+
+        segmentCentors[i] = (cmean, startRow+rmean)
+        startRow = startRow + rowInterval   # update row
+        blockCenters.append(double_raster(imgSegThreshed, startRow))
+
+    return segmentCentors, blockCenters
+
 def thresholding(img):
-    #x_thresh = sobel_thresh(img, orient='x', min=30,max=150)
-    #mag_thr = mag_thresh(img, sobel_kernel=3, mag_thresh=(40, 150))
-    #dir_thresh = dir_threshold(img, sobel_kernel=3, thresh=(0.8, 1.2))
-    #rgb_thresh = rgb_select(img,(210,220))
-    hls_thresh = hls_select(img, thresh=(40, 60))
-    lab_thresh = lab_select(img, thresh=(140, 220))
-    luv_thresh = luv_select(img, thresh=(170, 255))
+    rgb_thresh = rgb_select(img,(160,220))
+    hls_thresh = hls_select(img,channel='l', thresh=(200, 230))
+    lab_thresh = lab_select(img, channel='l',thresh=(190, 220))
+    luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
     threshholded = np.zeros_like(hls_thresh)
+
+    threshholded[((hls_thresh == 1) & (lab_thresh == 1))& (rgb_thresh==1) & (luv_thresh==1)]=255
+    #threshholded[((luv_thresh == 1))]=255
+    #cv2.imshow("threshed", threshholded)
+
     #threshholded[((hls_thresh == 1) & (lab_thresh == 1)) & (luv_thresh==1)]=255
-    threshholded[hls_thresh==1]=255
+    #threshholded[hls_thresh==1]=255
     
-    cv2.imshow("threshed", threshholded)
+    #cv2.imshow("threshed", threshholded)
+
     return threshholded
 
-def decide_way(img):
+
+def img_process(img): 
+    NUM_SEGS=40
     img=cv2.GaussianBlur(img,(5,5),0)
-    blur=thresholding(img)
+    pro_img=thresholding(img)
+    #img=thresholding(img)
+    pro_img = get_middle(pro_img)
+    pro_img=dilation(pro_img)
+    #segmentCentors, blockCenters = row_segment_centor(pro_img, NUM_SEGS)
+    '''
+    for i in range(0, NUM_SEGS):
+        cv2.circle(img, segmentCentors[i], 5, (255,0,0))
+        for j in range(0, len(blockCenters[i])):
+            cv2.circle(img, blockCenters[i][j], 5, (0,0,255))
+'''
+    return pro_img, img
+
+
+
+def decide_way(img):
+    #img=cv2.GaussianBlur(img,(5,5),0)
+    blur,croppedImg=img_process(img)
+
     coor=np.argwhere(blur==255)
     if len(coor) == 0:
         rmean = img.shape[0]/2
@@ -160,7 +282,7 @@ def decide_way(img):
         command='Straight'
     #cv2.putText(img,command, (10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
     #cv2.rectangle(img,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
-    return command,img, blur
+    return command,croppedImg, blur
 
 def capture_and_decide(filename):
     cap = cv2.VideoCapture(0)
@@ -184,12 +306,18 @@ def capture_and_decide(filename):
 # cap.release()
 # cv2.destroyAllWindows()
 
-'''
+
 folder='mobot/'
-count=0
-for filename in os.listdir(folder):
-    print filename
-    img=cv2.imread(os.path.join(folder,filename))
-    img=decide_way(img)
-    cv2.imwrite(filename,img)
-'''
+file='output.avi'
+cap=cv2.VideoCapture(file)
+#img=cv2.imread(os.path.join(folder,filename))
+while(True):
+    ret,frame=cap.read()
+    command,img,blur=decide_way(frame)
+    cv2.imshow('frame',blur)
+    if cv2.waitKey(1) & 0xFF==ord('q'):
+        break
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
