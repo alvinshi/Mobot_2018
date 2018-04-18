@@ -122,7 +122,7 @@ def lab_select(img, channel='l',thresh=(0, 255)):
         binary_output[(b_channel > thresh[0]) & (b_channel <= thresh[1])] = 1
     return binary_output
 
-def hls_select(img,channel='s',thresh=(0, 255)):
+def hls_select(img,channel='l',thresh=(0, 255)):
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     h_channel = hls[:,:,0]
     l_channel=hls[:,:,1]
@@ -226,17 +226,21 @@ def row_segment_centor(img, NUM_SEGS):
     return segmentCentors, blockCenters
 
 def thresholding(img):
-    #x_thresh = sobel_thresh(img, orient='x', min=30,max=150)
-    #mag_thr = mag_thresh(img, sobel_kernel=3, mag_thresh=(40, 150))
-    #dir_thresh = dir_threshold(img, sobel_kernel=3, thresh=(0.8, 1.2))
     rgb_thresh = rgb_select(img,(160,220))
     hls_thresh = hls_select(img,channel='l', thresh=(200, 230))
     lab_thresh = lab_select(img, channel='l',thresh=(190, 220))
     luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
     threshholded = np.zeros_like(hls_thresh)
+
     threshholded[((hls_thresh == 1) & (lab_thresh == 1))& (rgb_thresh==1) & (luv_thresh==1)]=255
     #threshholded[((luv_thresh == 1))]=255
     #cv2.imshow("threshed", threshholded)
+
+    #threshholded[((hls_thresh == 1) & (lab_thresh == 1)) & (luv_thresh==1)]=255
+    #threshholded[hls_thresh==1]=255
+    
+    #cv2.imshow("threshed", threshholded)
+
     return threshholded
 
 
@@ -247,13 +251,13 @@ def img_process(img):
     #img=thresholding(img)
     pro_img = get_middle(pro_img)
     pro_img=dilation(pro_img)
-    segmentCentors, blockCenters = row_segment_centor(pro_img, NUM_SEGS)
-    
+    #segmentCentors, blockCenters = row_segment_centor(pro_img, NUM_SEGS)
+    '''
     for i in range(0, NUM_SEGS):
         cv2.circle(img, segmentCentors[i], 5, (255,0,0))
         for j in range(0, len(blockCenters[i])):
             cv2.circle(img, blockCenters[i][j], 5, (0,0,255))
-
+'''
     return pro_img, img
 
 
@@ -285,8 +289,8 @@ def capture_and_decide(filename):
     ret, frame = cap.read()
     cap.release()
     command, img, blur = decide_way(frame)
-    cv2.imwrite(filename + "-input", img)
-    cv2.imwrite(filename + "-output", blur)
+    cv2.imwrite(filename, img)
+    cv2.imwrite("output" + filename, blur)
     print(command)
     return command
 
@@ -304,18 +308,16 @@ def capture_and_decide(filename):
 
 
 folder='mobot/'
-file='./mobot/10.jpg'
-count=0
+file='output.avi'
+cap=cv2.VideoCapture(file)
 #img=cv2.imread(os.path.join(folder,filename))
+while(True):
+    ret,frame=cap.read()
+    command,img,blur=decide_way(frame)
+    cv2.imshow('frame',blur)
+    if cv2.waitKey(1) & 0xFF==ord('q'):
+        break
 
-img=cv2.imread(file)
-startTime=time.time()
-#cv2.imshow('img',img)
-command,img,blur=decide_way(img)
-endTime=time.time()
-print(endTime-startTime)
-cv2.imshow('cropped',img)
-#cv2.imshow('blur',blur)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
