@@ -5,6 +5,8 @@ import math
 import os
 import time
 
+doubleRasterTime = 0
+
 def luv_select(img, thresh=(0, 255)):
     luv = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
     l_channel = luv[:,:,0]
@@ -119,9 +121,7 @@ def double_raster(imgTakein, startRow):
     img = normalize(imgTakein)
     cur_label=2
     coordinates = [None] * 50
-    eq=[]
-    for i in range(0,len(img)*len(img[0])):
-        eq.append(0)
+    eq=[0] * len(img)*len(img[0])
     for row in range(0,len(img)):
         for col in range(0,len(img[row])):
             if(img[row][col]==1):
@@ -169,12 +169,13 @@ def double_raster(imgTakein, startRow):
         coorAdded = False
 
     centers = get_center(coordinates)
-    print("finished double raster for one slice of image")
+    # print("finished double raster for one slice of image")
     return centers
 
 # Returns   1. Segment centors (including two different paths)
 #           2. bool path diverge state
 def row_segment_centor(img, NUM_SEGS):
+    global doubleRasterTime
     # Segment the original image into 20 segments
     numSegs = NUM_SEGS
     numRows = img.shape[0]
@@ -197,7 +198,11 @@ def row_segment_centor(img, NUM_SEGS):
 
         segmentCentors[i] = (cmean, startRow+rmean)
         startRow = startRow + rowInterval   # update row
+        doubleRasterStart = time.time()
         blockCenters.append(double_raster(imgSegThreshed, startRow))
+        doubleRasterEnd = time.time()
+
+        doubleRasterTime += doubleRasterEnd - doubleRasterStart
 
     return segmentCentors, blockCenters
 
@@ -239,7 +244,8 @@ def main():
 
     endTime = time.time()
     runTime = endTime - startTime
-    print(runTime)
+    print("Total run time: %f" %runTime)
+    print("DoubleRasterTime: %f" %doubleRasterTime)
     cv2.imshow('image',img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
