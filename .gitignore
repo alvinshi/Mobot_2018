@@ -102,3 +102,6 @@ ENV/
 
 # videos
 videos
+
+# DS_store
+.DS_Store

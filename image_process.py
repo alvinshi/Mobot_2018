@@ -174,7 +174,7 @@ def double_raster(imgTakein, startRow):
 
 # Returns   1. Segment centors (including two different paths)
 #           2. bool path diverge state
-def row_segment_centor(img, NUM_SEGS):
+def row_segment_center(img, NUM_SEGS):
     global doubleRasterTime
     # Segment the original image into 20 segments
     numSegs = NUM_SEGS
@@ -228,24 +228,27 @@ def decide_way(img):
     return command,img
 
 def main():
-    startTime = time.time()
-    PICTURE_FILE = './images/1.jpg'
+    startRunTime = time.time()
+    PICTURE_FILE = './sample_pictures/100.jpg'
     NUM_SEGS = 40
 
     img = cv2.imread(PICTURE_FILE)
     cv2.imshow("thresholded", thresholding(img))
     img = cv2.GaussianBlur(img,(13,13),0)
     img = get_middle(img)
-    segmentCentors, blockCenters = row_segment_centor(img, NUM_SEGS)
+    segmentCentors, blockCenters = row_segment_center(img, NUM_SEGS)
+
     for i in range(0, NUM_SEGS):
         cv2.circle(img, segmentCentors[i], 5, (255,0,0))
         for j in range(0, len(blockCenters[i])):
             cv2.circle(img, blockCenters[i][j], 5, (0,0,255))
 
-    endTime = time.time()
-    runTime = endTime - startTime
+    endRunTime = time.time()
+    runTime = endRunTime - startRunTime
+    segmentTime = endSegmentTime - startSegmentTime
     print("Total run time: %f" %runTime)
-    print("DoubleRasterTime: %f" %doubleRasterTime)
+    print("Total segment time: %f" %segmentTime)
+    print("DoubleRaster time: %f" %doubleRasterTime)
     cv2.imshow('image',img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
