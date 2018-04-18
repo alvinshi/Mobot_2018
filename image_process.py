@@ -224,13 +224,8 @@ def row_segment_center(img, NUM_SEGS, colInterval):
 
     return segmentCenters, blockCenters
 
-def main():
+def image_process(img, NUM_SEGS):
     startRunTime = time.time()
-    PICTURE_FILE = './sample_pictures/500.jpg'
-    VIDEO_FILE = ''
-    NUM_SEGS = 20
-
-    img = cv2.imread(PICTURE_FILE)
     img = cv2.GaussianBlur(img,(13,13),0)
     imgThreshed = thresholding(img)
     imgMiddle, colInterval = get_middle(imgThreshed)
@@ -248,6 +243,14 @@ def main():
 
     cv2.imshow('imageThreshed',imgThreshed)
     cv2.imshow('image', img)
+
+def main():
+
+    PICTURE_FILE = './sample_pictures/500.jpg'
+    VIDEO_FILE = './output.avi'
+    NUM_SEGS = 20
+    img = cv2.imread(PICTURE_FILE)
+    image_process(img, NUM_SEGS)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
