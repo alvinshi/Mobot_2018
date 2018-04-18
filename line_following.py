@@ -167,8 +167,8 @@ def capture_and_decide(filename):
     ret, frame = cap.read()
     cap.release()
     command, img, blur = decide_way(frame)
-    cv2.imwrite(filename + "-input", img)
-    cv2.imwrite(filename + "-output", blur)
+    cv2.imwrite(filename, img)
+    cv2.imwrite("output" + filename, blur)
     print(command)
     return command
 
