@@ -77,14 +77,15 @@ def dilation(img):
     return img_dilation
 
 def thresholding(img):
-    rgb_thresh = rgb_select(img,(160,220))
-    hls_thresh = hls_select(img,channel='l', thresh=(200, 230))
-    lab_thresh = lab_select(img, channel='l',thresh=(190, 220))
-    luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
+    rgb_thresh = rgb_select(img,(150,255))
+    hls_thresh = hls_select(img,channel='l', thresh=(180,240 ))
+    #lab_thresh = lab_select(img, channel='l',thresh=(190, 240))
+    #luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
     threshholded = np.zeros_like(hls_thresh)
+    #threshholded[((hls_thresh == 1) & (lab_thresh == 1))& (rgb_thresh==1) & (luv_thresh==1)]=255
+    threshholded[((hls_thresh == 1)&(rgb_thresh==1))]=255
 
-    threshholded[((hls_thresh == 1) & (lab_thresh == 1))& (rgb_thresh==1) & (luv_thresh==1)]=255
-    return dilation(threshholded)
+    return threshholded
 
 # adaptive thresholding method
 def adaptive_thresholding(img):
@@ -103,16 +104,17 @@ def get_center(coordinates, colInterval):
     index = 0
     centers = []
     while coordinates[index] != None:
-        sums = [0,0]
-        for i in coordinates[index]:
-            (row, col) = i
-            sums[0] = sums[0] + row
-            sums[1] = sums[1] + col
-        sums[0] = int(math.floor(sums[0] / len(coordinates[index])))
-        sums[1] = int(math.floor(sums[1] / len(coordinates[index]))) + colInterval
-        sums = switchRowCol(sums)
-        centers.append(tuple(sums))
-        index = index + 1
+        if (len(coordinates) > 20):
+            sums = [0,0]
+            for i in coordinates[index]:
+                (row, col) = i
+                sums[0] = sums[0] + row
+                sums[1] = sums[1] + col
+            sums[0] = int(math.floor(sums[0] / len(coordinates[index])))
+            sums[1] = int(math.floor(sums[1] / len(coordinates[index]))) + colInterval
+            sums = switchRowCol(sums)
+            centers.append(tuple(sums))
+            index = index + 1
     return centers
 
 # Switch the row and col for the drawing function
@@ -225,10 +227,11 @@ def row_segment_center(img, NUM_SEGS, colInterval):
 def main():
     startRunTime = time.time()
     PICTURE_FILE = './sample_pictures/500.jpg'
+    VIDEO_FILE = ''
     NUM_SEGS = 20
 
     img = cv2.imread(PICTURE_FILE)
-    img = cv2.GaussianBlur(img,(11,11),0)
+    img = cv2.GaussianBlur(img,(13,13),0)
     imgThreshed = thresholding(img)
     imgMiddle, colInterval = get_middle(imgThreshed)
     segmentCentors, blockCenters = row_segment_center(imgMiddle, NUM_SEGS, colInterval)
