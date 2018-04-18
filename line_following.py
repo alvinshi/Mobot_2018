@@ -289,19 +289,19 @@ def capture_and_decide(filename):
     print(command)
     return command
 
-folder='mobot/'
-video='output2.avi'
-image='./sample_pictures/320.jpg'
+#folder='mobot/'
+#video='output2.avi'
+#image='./sample_pictures/320.jpg'
 
-start=time.time()
-img=cv2.imread(image)
-command,img,blur=decide_way(img)
-end=time.time()
-print(end-start)
-cv2.imshow('frame',img)
-cv2.imshow('f1',blur)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+#start=time.time()
+#img=cv2.imread(image)
+#command,img,blur=decide_way(img)
+#end=time.time()
+#print(end-start)
+#cv2.imshow('frame',img)
+#cv2.imshow('f1',blur)
+#cv2.waitKey(0)
+#cv2.destroyAllWindows()
 
 
 '''

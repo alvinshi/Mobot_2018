@@ -29,7 +29,7 @@ data.stopped = False
 v_thread = VideoThread(1, "Thread-1", data)
 v_thread.start()
 time.sleep(1) # Wait for the camera to adjust its exposure
-#m.start()
+m.start()
 while not data.stopped:
         try:
                 img = data.img
@@ -37,9 +37,9 @@ while not data.stopped:
                 cv2.imwrite(str(seq) + "input.jpg", cropped_img)
                 cv2.imwrite(str(seq) + "out.jpg", blurred_img)
                 seq = seq + 1
-                #if command == "Straight": m.go_ahead()
-                #elif command == "Left": m.turn_left()
-                #elif command == "Right": m.turn_right()
+                if command == "Straight": m.go_ahead()
+                elif command == "Left": m.turn_left()
+                elif command == "Right": m.turn_right()
                 print("COMMAND: " + command)
                 print("Mobot State: " + m.state)
                 print("lspeed: " + str(m.lspeed))
@@ -47,5 +47,6 @@ while not data.stopped:
         except KeyboardInterrupt:
                 print("Ctrl + C received")
                 data.stopped = True
+                m.go_stop()
 
 print("Threads terminated")
