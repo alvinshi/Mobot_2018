@@ -1,7 +1,7 @@
 from Tkinter import *
 
 from mobot import *
-import line_following as lf
+# import line_following as lf
 
 ####################################
 # customize these functions
@@ -38,12 +38,13 @@ def keyPressed(event, data, root):
         root.quit()
 
 def timerFired(data):
-    data.seq = data.seq + 1
-    command = lf.capture_and_decide(str(data.seq) + ".jpg")
-    data.cv_command = command
-    if command == "Straight": data.mobot.go_ahead()
-    elif command == "Left": data.mobot.turn_left()
-    elif command == "Right": data.mobot.turn_right()
+    pass
+    # data.seq = data.seq + 1
+    # command = lf.capture_and_decide(str(data.seq) + ".jpg")
+    # data.cv_command = command
+    # if command == "Straight": data.mobot.go_ahead()
+    # elif command == "Left": data.mobot.turn_left()
+    # elif command == "Right": data.mobot.turn_right()
 
 def redrawAll(canvas, data):
     canvas.create_text(data.width/8, data.height/5, text="State: " + data.mobot.state)
