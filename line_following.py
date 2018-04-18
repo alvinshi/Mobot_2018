@@ -108,7 +108,7 @@ def lab_select(img, thresh=(0, 255)):
     binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
     return binary_output
 
-def hls_select(img,channel='s',thresh=(0, 255)):
+def hls_select(img,channel='l',thresh=(0, 255)):
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     if channel=='h':
         channel = hls[:,:,0]
@@ -135,7 +135,9 @@ def thresholding(img):
     lab_thresh = lab_select(img, thresh=(140, 220))
     luv_thresh = luv_select(img, thresh=(170, 255))
     threshholded = np.zeros_like(hls_thresh)
-    threshholded[((hls_thresh == 1) & (lab_thresh == 1)) & (luv_thresh==1)]=255
+    #threshholded[((hls_thresh == 1) & (lab_thresh == 1)) & (luv_thresh==1)]=255
+    threshholded[hls_thresh==1]=255
+    
     cv2.imshow("threshed", threshholded)
     return threshholded
 
