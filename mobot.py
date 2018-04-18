@@ -144,8 +144,8 @@ class Mobot:
 		self.set_motorspeed(self.CRUISE_SPEED, self.CRUISE_SPEED)
 		self.go_ahead()
 
-	def speed_up(self, delta = 20):
+	def speed_up(self, delta = 10):
 		self.set_motorspeed(self.lspeed + delta, self.rspeed + delta)
 
-	def speed_down(self, delta = 20):
+	def speed_down(self, delta = 10):
 		self.set_motorspeed(self.lspeed - delta, self.rspeed - delta)
