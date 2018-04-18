@@ -109,8 +109,9 @@ class Mobot:
 	def turn_left(self, radius = 20):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
-		lspeed = int(self.rspeed / ratio)
-		self.set_motorspeed(lspeed, self.rspeed)
+		rspeed = max(self.lspeed, self.rspeed)
+		lspeed = int(rspeed / ratio)
+		self.set_motorspeed(lspeed, rspeed)
 		wiringpi.digitalWrite(self.IN1, self.LOW)
 		wiringpi.digitalWrite(self.IN2, self.HIGH)
 		wiringpi.digitalWrite(self.IN3, self.LOW)
@@ -120,8 +121,9 @@ class Mobot:
 	def turn_right(self, radius = 20):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
-		rspeed = int(self.lspeed / ratio)
-		self.set_motorspeed(self.lspeed, rspeed)
+		lspeed = max(self.lspeed, self.rspeed)
+		rspeed = int(lspeed / ratio)
+		self.set_motorspeed(lspeed, rspeed)
 		wiringpi.digitalWrite(self.IN1, self.LOW)
 		wiringpi.digitalWrite(self.IN2, self.HIGH)
 		wiringpi.digitalWrite(self.IN3, self.LOW)
@@ -142,8 +144,8 @@ class Mobot:
 		self.set_motorspeed(self.CRUISE_SPEED, self.CRUISE_SPEED)
 		self.go_ahead()
 
-	def speed_up(self, delta = 20):
+	def speed_up(self, delta = 10):
 		self.set_motorspeed(self.lspeed + delta, self.rspeed + delta)
 
-	def speed_down(self, delta = 20):
+	def speed_down(self, delta = 10):
 		self.set_motorspeed(self.lspeed - delta, self.rspeed - delta)
