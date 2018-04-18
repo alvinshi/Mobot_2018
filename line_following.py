@@ -133,7 +133,7 @@ def hls_select(img,channel='l',thresh=(0, 255)):
     elif channel=='l':
         binary_output[(l_channel > thresh[0]) & (l_channel< thresh[1])] = 1
     else:
-        binary_output[(s_channel < thresh[0]) | (s_channel> thresh[1])] = 1
+        binary_output[(s_channel > thresh[0]) & (s_channel< thresh[1])] = 1
     return binary_output
 
 def rgb_select(img,thresh=(0,255)):
@@ -226,20 +226,13 @@ def row_segment_centor(img, NUM_SEGS):
     return segmentCentors, blockCenters
 
 def thresholding(img):
-    rgb_thresh = rgb_select(img,(160,220))
-    hls_thresh = hls_select(img,channel='l', thresh=(200, 230))
-    lab_thresh = lab_select(img, channel='l',thresh=(190, 220))
-    luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
+    rgb_thresh = rgb_select(img,(150,255))
+    hls_thresh = hls_select(img,channel='l', thresh=(180,240 ))
+    #lab_thresh = lab_select(img, channel='l',thresh=(190, 240))
+    #luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
     threshholded = np.zeros_like(hls_thresh)
-
-    threshholded[((hls_thresh == 1) & (lab_thresh == 1))& (rgb_thresh==1) & (luv_thresh==1)]=255
-    #threshholded[((luv_thresh == 1))]=255
-    #cv2.imshow("threshed", threshholded)
-
-    #threshholded[((hls_thresh == 1) & (lab_thresh == 1)) & (luv_thresh==1)]=255
-    #threshholded[hls_thresh==1]=255
-    
-    #cv2.imshow("threshed", threshholded)
+    #threshholded[((hls_thresh == 1) & (lab_thresh == 1))& (rgb_thresh==1) & (luv_thresh==1)]=255
+    threshholded[((hls_thresh == 1)&(rgb_thresh==1))]=255
 
     return threshholded
 
@@ -247,6 +240,7 @@ def thresholding(img):
 def img_process(img): 
     NUM_SEGS=40
     img=cv2.GaussianBlur(img,(5,5),0)
+
     pro_img=thresholding(img)
     #img=thresholding(img)
     pro_img = get_middle(pro_img)
@@ -258,6 +252,7 @@ def img_process(img):
         for j in range(0, len(blockCenters[i])):
             cv2.circle(img, blockCenters[i][j], 5, (0,0,255))
 '''
+    img=get_middle(img)
     return pro_img, img
 
 
@@ -268,20 +263,20 @@ def decide_way(img):
 
     coor=np.argwhere(blur==255)
     if len(coor) == 0:
-        rmean = img.shape[0]/2
-        cmean = img.shape[1]/2
+        rmean = croppedImg.shape[0]//2
+        cmean = croppedImg.shape[1]//2
     else:
         rmean=int(math.floor(np.mean(coor[:,0])))
         cmean=int(math.floor(np.mean(coor[:,1])))
-    col=img.shape[1]/2
+    col=croppedImg.shape[1]//2
     if(cmean<col-30):
         command='Left'
     elif(cmean>col+30):
         command='Right'
     else:
         command='Straight'
-    #cv2.putText(img,command, (10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
-    #cv2.rectangle(img,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
+    cv2.putText(croppedImg,command, (10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
+    cv2.rectangle(croppedImg,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
     return command,croppedImg, blur
 
 def capture_and_decide(filename):
@@ -294,30 +289,31 @@ def capture_and_decide(filename):
     print(command)
     return command
 
-
-# cap=cv2.VideoCapture('./videos/out.h264')
-# while(True):
-#     ret,frame=cap.read()
-#     command,img=decide_way(frame)
-#     cv2.imshow('frame',img)
-#     if cv2.waitKey(1) & 0xFF==ord('q'):
-#         break
-
-# cap.release()
-# cv2.destroyAllWindows()
-
-
 folder='mobot/'
-file='output.avi'
-cap=cv2.VideoCapture(file)
-#img=cv2.imread(os.path.join(folder,filename))
-while(True):
-    ret,frame=cap.read()
-    command,img,blur=decide_way(frame)
-    cv2.imshow('frame',blur)
-    if cv2.waitKey(1) & 0xFF==ord('q'):
-        break
+video='output2.avi'
+image='./sample_pictures/320.jpg'
 
+start=time.time()
+img=cv2.imread(image)
+command,img,blur=decide_way(img)
+end=time.time()
+print(end-start)
+cv2.imshow('frame',img)
+cv2.imshow('f1',blur)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
+
+'''
+cap=cv2.VideoCapture(video)
+#img=cv2.imread(os.path.join(folder,filename))
+while(cap.isOpened()):
+    ret,frame=cap.read()
+    command,img,blur=decide_way(frame)
+    cv2.imshow('frame',blur)
+    cv2.imshow('img',img)
+    if cv2.waitKey(1) & 0xFF==ord('q'):
+        break
+cap.release()
+cv2.destroyAllWindows()
+'''
