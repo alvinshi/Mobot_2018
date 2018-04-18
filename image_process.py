@@ -7,27 +7,46 @@ import time
 
 doubleRasterTime = 0
 
-def luv_select(img, thresh=(0, 255)):
+def luv_select(img, channel='l',thresh=(0, 255)):
     luv = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
     l_channel = luv[:,:,0]
+    u_channel=luv[:,:,1]
+    v_channel=luv[:,:,2]
     binary_output = np.zeros_like(l_channel)
-    binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    if(channel=='l'):
+        binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    elif(channel=='u'):
+        binary_output[(u_channel > thresh[0]) & (u_channel <= thresh[1])] = 1
+    else:
+        binary_output[(v_channel > thresh[0]) & (v_channel <= thresh[1])] = 1
     return binary_output
 
-def lab_select(img, thresh=(0, 255)):
+def lab_select(img, channel = 'l', thresh=(0, 255)):
     lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
     l_channel = lab[:,:,0]
+    a_channel=lab[:,:,1]
+    b_channel=lab[:,:,2]
     binary_output = np.zeros_like(l_channel)
-    binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    if(channel=='l'):
+        binary_output[(l_channel > thresh[0]) & (l_channel <= thresh[1])] = 1
+    elif(channel=='a'):
+        binary_output[(a_channel > thresh[0]) & (a_channel <= thresh[1])] = 1
+    else:
+        binary_output[(b_channel > thresh[0]) & (b_channel <= thresh[1])] = 1
     return binary_output
 
-def hls_select(img, thresh=(0, 255)):
+def hls_select(img, channel = 'l', thresh=(0, 255)):
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-    hchannel = hls[:,:,0]
-    lchannel=hls[:,:,1]
-    schannel=hls[:,:,2]
-    binary_output = np.zeros_like(lchannel)
-    binary_output[(lchannel > thresh[0]) & (lchannel< thresh[1]) & (schannel < 100)] = 1
+    h_channel = hls[:,:,0]
+    l_channel=hls[:,:,1]
+    s_channel=hls[:,:,2]
+    binary_output = np.zeros_like(l_channel)
+    if channel=='h':
+        binary_output[(h_channel > thresh[0]) & (h_channel< thresh[1])] = 1
+    elif channel=='l':
+        binary_output[(l_channel > thresh[0]) & (l_channel< thresh[1])] = 1
+    else:
+        binary_output[(s_channel < thresh[0]) | (s_channel> thresh[1])] = 1
     return binary_output
 
 def rgb_select(img,thresh=(0,255)):
@@ -49,26 +68,23 @@ def get_middle(img):
     midCol = colNum/2
     # Take the middle one third of the image
     croppedImg = img[0:rowNum, midCol-colInterval:midCol+colInterval]
-    return croppedImg
+    return croppedImg, colInterval
 
 # Dilation to expand white line after thresholding
 def dilation(img):
-    kernel = np.ones((17,17), np.uint8)
+    kernel = np.ones((25,25), np.uint8)
     img_dilation = cv2.dilate(img, kernel, iterations=1)
     return img_dilation
 
 def thresholding(img):
-    # x_thresh = sobel_thresh(img, orient='x', min=30,max=150)
-    # mag_thr = mag_thresh(img, sobel_kernel=3, mag_thresh=(40, 150))
-    # dir_thresh = dir_threshold(img, sobel_kernel=3, thresh=(0.8, 1.2))
-    # rgb_thresh = rgb_select(img,(210,220))
-    lab_thresh = lab_select(img, thresh=(140, 220))
-    luv_thresh = luv_select(img, thresh=(170, 255))
-    hls_thresh = hls_select(img, thresh=(100, 255))
-    rgb_thresh = rgb_select(img, thresh=(150, 190))
-    thresholded = np.zeros_like(hls_thresh)
-    thresholded[(hls_thresh == 1)]=255
-    return dilation(thresholded)
+    rgb_thresh = rgb_select(img,(160,220))
+    hls_thresh = hls_select(img,channel='l', thresh=(200, 230))
+    lab_thresh = lab_select(img, channel='l',thresh=(190, 220))
+    luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
+    threshholded = np.zeros_like(hls_thresh)
+
+    threshholded[((hls_thresh == 1) & (lab_thresh == 1))& (rgb_thresh==1) & (luv_thresh==1)]=255
+    return dilation(threshholded)
 
 # adaptive thresholding method
 def adaptive_thresholding(img):
@@ -83,7 +99,7 @@ def normalize(img):
     normalizeImg[img == 255] = 1
     return normalizeImg
 
-def get_center(coordinates):
+def get_center(coordinates, colInterval):
     index = 0
     centers = []
     while coordinates[index] != None:
@@ -93,7 +109,8 @@ def get_center(coordinates):
             sums[0] = sums[0] + row
             sums[1] = sums[1] + col
         sums[0] = int(math.floor(sums[0] / len(coordinates[index])))
-        sums[1] = int(math.floor(sums[1] / len(coordinates[index])))
+        sums[1] = int(math.floor(sums[1] / len(coordinates[index]))) + colInterval
+        sums = switchRowCol(sums)
         centers.append(tuple(sums))
         index = index + 1
     return centers
@@ -108,15 +125,15 @@ def switchRowCol(origCoor):
 def addCoordinates(coorNum, label, labelCoor, startRow, coordinates):
     for index in range(0, coorNum):
         labelCoor[index][0] = labelCoor[index][0] + startRow
-        labelCoorT = switchRowCol(labelCoor[index])
+        #labelCoorT = switchRowCol(labelCoor[index])
         if coordinates[label-2] != None:
-            coordinates[label-2].append(labelCoorT)
+            coordinates[label-2].append(labelCoor[index])
         else:
-            coordinates[label-2] = [labelCoorT]
+            coordinates[label-2] = [labelCoor[index]]
 
 # double raster for image segmentation
 # returns the center coordinates of each of the segment
-def double_raster(imgTakein, startRow):
+def double_raster(imgTakein, startRow, colInterval):
     # take in binary image; startRow is the start row of the current image slice
     img = normalize(imgTakein)
     cur_label=2
@@ -168,27 +185,26 @@ def double_raster(imgTakein, startRow):
             addCoordinates(coorNum, label, labelCoor, startRow, coordinates)
         coorAdded = False
 
-    centers = get_center(coordinates)
+    centers = get_center(coordinates, colInterval)
     # print("finished double raster for one slice of image")
     return centers
 
 # Returns   1. Segment centors (including two different paths)
 #           2. bool path diverge state
-def row_segment_center(img, NUM_SEGS):
+def row_segment_center(img, NUM_SEGS, colInterval):
     global doubleRasterTime
     # Segment the original image into 20 segments
     numSegs = NUM_SEGS
     numRows = img.shape[0]
     numCols = img.shape[1]
     rowInterval = numRows/numSegs
-    segmentCentors = [None] * numSegs
+    segmentCenters = [None] * numSegs
     blockCenters = []
     startRow = 0
     for i in range(0, numSegs):
         imgSeg = img[startRow:startRow+rowInterval, 0:numCols]
         # Threshold imageSegments and calculate the centor of each segments
-        imgSegThreshed = thresholding(imgSeg)
-        coor = np.argwhere(imgSegThreshed == 255)
+        coor = np.argwhere(imgSeg == 255)
         if len(coor) == 0:
             rmean = img.shape[0]/2
             cmean = img.shape[1]/2
@@ -196,47 +212,26 @@ def row_segment_center(img, NUM_SEGS):
             rmean=int(math.floor(np.mean(coor[:,0])))
             cmean=int(math.floor(np.mean(coor[:,1])))
 
-        segmentCentors[i] = (cmean, startRow+rmean)
+        segmentCenters[i] = (cmean+colInterval, startRow+rmean)
         startRow = startRow + rowInterval   # update row
         doubleRasterStart = time.time()
-        blockCenters.append(double_raster(imgSegThreshed, startRow))
+        blockCenters.append(double_raster(imgSeg, startRow, colInterval))
         doubleRasterEnd = time.time()
 
         doubleRasterTime += doubleRasterEnd - doubleRasterStart
 
-    return segmentCentors, blockCenters
-
-def decide_way(img):
-    img=cv2.GaussianBlur(img,(25,25),0)
-    blur=thresholding(img)
-    coor=np.argwhere(blur==255)
-    if len(coor) == 0:
-        rmean = img.shape[0]/2
-        cmean = img.shape[1]/2
-    else:
-        rmean=int(math.floor(np.mean(coor[:,0])))
-        cmean=int(math.floor(np.mean(coor[:,1])))
-    col=img.shape[1]/2
-    if(cmean<col-30):
-        command='Left'
-    elif(cmean>col+30):
-        command='Right'
-    else:
-        command='Straight'
-    cv2.putText(img,command, (10,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0),2)
-    cv2.rectangle(img,(cmean-20,rmean-20),(cmean+20,rmean+20),(0,255,0),3)
-    return command,img
+    return segmentCenters, blockCenters
 
 def main():
     startRunTime = time.time()
-    PICTURE_FILE = './sample_pictures/100.jpg'
-    NUM_SEGS = 40
+    PICTURE_FILE = './sample_pictures/500.jpg'
+    NUM_SEGS = 20
 
     img = cv2.imread(PICTURE_FILE)
-    cv2.imshow("thresholded", thresholding(img))
-    img = cv2.GaussianBlur(img,(13,13),0)
-    img = get_middle(img)
-    segmentCentors, blockCenters = row_segment_center(img, NUM_SEGS)
+    img = cv2.GaussianBlur(img,(11,11),0)
+    imgThreshed = thresholding(img)
+    imgMiddle, colInterval = get_middle(imgThreshed)
+    segmentCentors, blockCenters = row_segment_center(imgMiddle, NUM_SEGS, colInterval)
 
     for i in range(0, NUM_SEGS):
         cv2.circle(img, segmentCentors[i], 5, (255,0,0))
@@ -245,11 +240,12 @@ def main():
 
     endRunTime = time.time()
     runTime = endRunTime - startRunTime
-    segmentTime = endSegmentTime - startSegmentTime
     print("Total run time: %f" %runTime)
-    print("Total segment time: %f" %segmentTime)
     print("DoubleRaster time: %f" %doubleRasterTime)
-    cv2.imshow('image',img)
+
+    cv2.imshow('imageThreshed',imgThreshed)
+    cv2.imshow('image', img)
+
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
