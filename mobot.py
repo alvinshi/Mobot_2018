@@ -42,7 +42,7 @@ class Mobot:
                 #LED
                 wiringpi.pinMode(self.LEDL, self.OUTPUT)
                 wiringpi.pinMode(self.LEDR, self.OUTPUT)
-                
+
 		self.lspeed = 0
 		self.rspeed = 0
 		self.state = "Waiting"
@@ -106,7 +106,7 @@ class Mobot:
 		ratio = (float(radius + self.MOBOT_AXIS)) / radius
                 return ratio
 
-	def turn_left(self, radius = 10):
+	def turn_left_by_radius(self, radius = 10):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
 		rspeed = max(self.lspeed, self.rspeed)
@@ -118,11 +118,35 @@ class Mobot:
 		wiringpi.digitalWrite(self.IN4, self.HIGH)
 		self.state = "Turning Left"
 
-	def turn_right(self, radius = 10):
+	def turn_right_by_radius(self, radius = 10):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
 		lspeed = max(self.lspeed, self.rspeed)
 		rspeed = int(lspeed / ratio)
+		self.set_motorspeed(lspeed, rspeed)
+		wiringpi.digitalWrite(self.IN1, self.LOW)
+		wiringpi.digitalWrite(self.IN2, self.HIGH)
+		wiringpi.digitalWrite(self.IN3, self.LOW)
+		wiringpi.digitalWrite(self.IN4, self.HIGH)
+		self.state = "Turning Right"
+
+	def turn_left(self, scale):
+		self.go_stop()
+		reference_speed = max(self.lspeed, self.rspeed)
+		lspeed = int(reference_speed - scale / 2)
+		rspeed = int(reference_speed + scale / 2)
+		self.set_motorspeed(lspeed, rspeed)
+		wiringpi.digitalWrite(self.IN1, self.LOW)
+		wiringpi.digitalWrite(self.IN2, self.HIGH)
+		wiringpi.digitalWrite(self.IN3, self.LOW)
+		wiringpi.digitalWrite(self.IN4, self.HIGH)
+		self.state = "Turning Left"
+
+	def turn_right(self, scale):
+		self.go_stop()
+		reference_speed = max(self.lspeed, self.rspeed)
+		lspeed = int(reference_speed + scale / 2)
+		rspeed = int(reference_speed - scale / 2)
 		self.set_motorspeed(lspeed, rspeed)
 		wiringpi.digitalWrite(self.IN1, self.LOW)
 		wiringpi.digitalWrite(self.IN2, self.HIGH)

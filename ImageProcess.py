@@ -111,14 +111,9 @@ def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 10):
         centroidNum = len(centroids)
         for centroid in centroids:
             sumX += centroid[0]
-        if sumX/centroidNum < imgCenter[0]-STRAIGHT_TOL:
-            command = "Left"
-        elif sumX/centroidNum > imgCenter[0]+STRAIGHT_TOL:
-            command = "Right"
-        else:
-            command = "Straight"
+        command = ((float(sumX)/centroidNum)-240)/480 * 100
         return command
-    return "Straight"
+    return 0
 
 
 # Called in the robot main loop
