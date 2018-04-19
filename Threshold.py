@@ -61,7 +61,8 @@ def dilation(img):
 
 def thresholding(img):
     rgb_thresh = rgb_select(img,(150,255))
-    hls_thresh = hls_select(img,channel='l', thresh=(180,240 ))
+    hls_thresh = hls_select(img,channel='l', thresh=(160,240)) #Test Set 2
+    #hls_thresh = hls_select(img,channel='l', thresh=(180,240)) #Test Set 1
     #lab_thresh = lab_select(img, channel='l',thresh=(190, 240))
     #luv_thresh = luv_select(img, channel='l',thresh=(180, 240))
     threshholded = np.zeros_like(hls_thresh)

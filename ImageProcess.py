@@ -6,10 +6,11 @@ import os
 import time
 import Threshold as th
 
-MODE = "video"  # image or video
+MODE = "image"  # image or video
 NUM_SEGS = 35  # Number of row slices
 IMG_FRACTION = 0.75  # fraction of the middle image
-PICTURE_FILE = './sample_pictures/200.jpg'
+#PICTURE_FILE = './sample_pictures/200.jpg'
+PICTURE_FILE = './22_in.jpg'
 VIDEO_FILE = './videos/output.avi'
 
 # get the middle part of the image for image processing
@@ -170,5 +171,5 @@ def main():
                 break
 
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
