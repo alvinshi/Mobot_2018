@@ -40,8 +40,8 @@ v_thread.start()
 time.sleep(1) # Wait for the camera to adjust its exposure
 
 m.start() # Start the robot
-while not data.stopped:
-        try:
+try:
+        while not data.stopped:
                 img = data.img
                 command, frameAtIntersection = ip.get_command(img, data.pastStates, data.choices, seq_n)
                 seq_n += 1
@@ -54,9 +54,9 @@ while not data.stopped:
                 print("Mobot State: " + m.state)
                 print("lspeed: " + str(m.lspeed))
                 print("rspeed: " + str(m.rspeed))
-        except KeyboardInterrupt:
-                print("Ctrl + C received")
-                data.stopped = True
-                m.go_stop()
+except KeyboardInterrupt:
+        print("Ctrl + C received")
+        data.stopped = True
+        m.go_stop()
 
 print("Threads terminated")
