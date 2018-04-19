@@ -9,6 +9,8 @@ import Threshold as th
 MODE = "video"  # image or video
 NUM_SEGS = 35  # Number of row slices
 IMG_FRACTION = 0.75  # fraction of the middle image
+PICTURE_FILE = './sample_pictures/200.jpg'
+VIDEO_FILE = './videos/output.avi'
 
 # get the middle part of the image for image processing
 def get_middle(img, fraction = 0.5):
@@ -97,15 +99,17 @@ def image_process(img, NUM_SEGS, IMG_FRACTION):
     cv2.imshow('image', img)
     return midCentroids, leftCentroids, rightCentroids, frameAtIntersection
 
-def get_commandInfo(imgCenter, centroids):
+def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 30):
     sumX = 0
     centroidNum = len(centroids)
     for centroid in centroids:
         sumX += centroid[0]
-    if sumX/centroidNum < imgCenter[0]:
-        command = "left"
-    else:
-        command = "right"
+    if sumX/centroidNum < imgCenter[0]-STRAIGHT_TOL:
+        command = "Left"
+    elif sumX/centroidNum > imgCenter[0]+STRAIGHT_TOL:
+        command = "Right"
+    else
+        command = "Straight"
     return command
 
 
@@ -133,8 +137,8 @@ def get_command(img, pastStates, preferredSide, NUM_SEGS, IMG_FRACTION):
         return None
 
 def main():
-    PICTURE_FILE = './sample_pictures/200.jpg'
-    VIDEO_FILE = './videos/output.avi'
+    global PICTURE_FILE
+    global VIDEO_FILE
     global NUM_SEGS
     global IMG_FRACTION
 
