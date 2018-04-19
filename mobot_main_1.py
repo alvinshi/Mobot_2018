@@ -23,7 +23,7 @@ class VideoThread(threading.Thread):
                         ret, frame = self.cap.read()
                         data.img = frame
 
-m = Mobot(50)
+m = Mobot(40)
 
 # Variable initialization
 seq_n = 1
