@@ -30,7 +30,10 @@ def row_segment_centers(img, NUM_SEGS, colOffset, CONNECTIVITY=8, AREA_THRESH=50
     numCols = img.shape[1]
     rowInterval = numRows/numSegs
     startRow = 0
-    centroids = []
+    midCentroids = []   # centroids add to here when not at intersection
+    leftCentroids = []  # left centroids add to here when at intersection
+    rightCentroids = [] # right centroids add to here when at intersection
+    midStartIndex = 0
     consecDiverge = 0
     frameAtIntersection = False
     for i in range(0, numSegs):
@@ -47,53 +50,87 @@ def row_segment_centers(img, NUM_SEGS, colOffset, CONNECTIVITY=8, AREA_THRESH=50
                 frameAtIntersection = True
         # get centroids
         stats = output[2]
+        midCenterPerSlice = 0
         for j in range(1, labelNum):    # Start from 1 to ignore background label
             if stats[j, cv2.CC_STAT_AREA] > AREA_THRESH:
                 x = int(output[3][j][0])+colOffset
                 y = int(output[3][j][1])+startRow
-                centroids.append((x, y))
+                midCentroids.append((x, y))
+                midCenterPerSlice += 1
+                if labelNum == 2:   # One segment
+                    leftCentroids.append((x,y))
+                    rightCentroids.append((x,y))
+        if midCenterPerSlice == 2:   #   two segments
+            # Add left and right centroids, should be 2 in list
+            x1 = midCentroids[midStartIndex][0]
+            x2 = midCentroids[midStartIndex][0]
+            if x1 < x2:
+                leftCentroids.append((midCentroids[midStartIndex][0], midCentroids[midStartIndex][1]))
+                rightCentroids.append((midCentroids[midStartIndex+1][0], midCentroids[midStartIndex+1][1]))
+            else:
+                leftCentroids.append((midCentroids[midStartIndex+1][0], midCentroids[midStartIndex+1][1]))
+                rightCentroids.append((midCentroids[midStartIndex][0], midCentroids[midStartIndex][1]))
+        midStartIndex += midCenterPerSlice
         startRow += rowInterval
-    return centroids, frameAtIntersection
+
+    if not frameAtIntersection:
+        leftCentroids = None
+        rightCentroids = None
+
+    return midCentroids, leftCentroids, rightCentroids, frameAtIntersection
 
 def image_process(img, NUM_SEGS, IMG_FRACTION):
     img = cv2.GaussianBlur(img,(13,13),0)
     imgThreshed = th.thresholding(img)
     imgMiddle, colOffset = get_middle(imgThreshed, IMG_FRACTION)
-    centroids, frameAtIntersection = row_segment_centers(imgMiddle, NUM_SEGS, colOffset)
+    midCentroids, leftCentroids, rightCentroids, frameAtIntersection = row_segment_centers(imgMiddle, NUM_SEGS, colOffset)
+
     # Draw all
-    for i in range(0,len(centroids)):
-        cv2.circle(img, centroids[i], 5, (255,0,0))
+    for i in range(0,len(midCentroids)):
+        cv2.circle(img, midCentroids[i], 5, (255,0,0))
+    if leftCentroids != None and rightCentroids != None:
+        for i in range(0,len(leftCentroids)):
+            cv2.circle(img, leftCentroids[i], 3, (0,255,0))
+        for i in range(0,len(rightCentroids)):
+            cv2.circle(img, rightCentroids[i], 7, (0,0,255))
     cv2.imshow('imageThreshed',imgThreshed)
     cv2.imshow('image', img)
-    return centroids, atIntersection
+    return midCentroids, leftCentroids, rightCentroids, frameAtIntersection
 
-def get_right_centroids(centroids):
-    pass
+def get_commandInfo(imgCenter, centroids):
+    sumX = 0
+    centroidNum = len(centroids)
+    for centroid in centroids:
+        sumX += centroid[0]
+    if sumX/centroidNum < imgCenter[0]:
+        command = "left"
+    else:
+        command = "right"
+    return command
 
-def get_left_centroids(centroids):
-    pass
-
-def get_middle_centroids(centroids):
-    pass
 
 # Called in the robot main loop
+# Takes in the image to be processed
 # Takes in last N frames of intersection state (to get rid of noise)
 # Takes in preferred side if at intersection
-# Takes in centroids
 # return command and current "atIntersection" state
-def get_command(pastStates, preferredSide, centroids, frameAtIntersection):
+def get_command(img, pastStates, preferredSide, NUM_SEGS, IMG_FRACTION):
+    midCentroids, leftCentroids, rightCentroids, frameAtIntersection = image_process(img, NUM_SEGS, IMG_FRACTION)
+    width = img.shape[1]
+    height = img.shape[0]
+    imgCenter = (width/2, height/2)
     for i in range(0, len(pastStates)):
         if not pastStates[i]:
-            command = get_middle_centroids(centroids)
+            command = get_commandInfo(imgCenter, midCentroids)
             return command, frameAtIntersection
     if preferredSide == "left":
-        command = get_left_centroids(centroids)
+        command = get_commandInfo(imgCenter, leftCentroids)
         return command, frameAtIntersection
     elif preferredSide == "right":
-        command = get_right_centroids(centroids)
+        command = get_commandInfo(imgCenter, rightCentroids)
         return command, frameAtIntersection
     else:
-        pass
+        return None
 
 def main():
     PICTURE_FILE = './sample_pictures/200.jpg'
