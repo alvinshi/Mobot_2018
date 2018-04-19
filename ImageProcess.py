@@ -113,7 +113,7 @@ def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 30):
         command = "Left"
     elif sumX/centroidNum > imgCenter[0]+STRAIGHT_TOL:
         command = "Right"
-    else
+    else:
         command = "Straight"
     return command
 
