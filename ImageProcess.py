@@ -101,16 +101,18 @@ def image_process(img, NUM_SEGS, IMG_FRACTION):
 
 def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 30):
     sumX = 0
-    centroidNum = len(centroids)
-    for centroid in centroids:
-        sumX += centroid[0]
-    if sumX/centroidNum < imgCenter[0]-STRAIGHT_TOL:
-        command = "Left"
-    elif sumX/centroidNum > imgCenter[0]+STRAIGHT_TOL:
-        command = "Right"
-    else:
-        command = "Straight"
-    return command
+    if centroids != None:
+        centroidNum = len(centroids)
+        for centroid in centroids:
+            sumX += centroid[0]
+        if sumX/centroidNum < imgCenter[0]-STRAIGHT_TOL:
+            command = "Left"
+        elif sumX/centroidNum > imgCenter[0]+STRAIGHT_TOL:
+            command = "Right"
+        else:
+            command = "Straight"
+        return command
+    return command = "Straight"
 
 
 # Called in the robot main loop
