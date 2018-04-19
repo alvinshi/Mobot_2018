@@ -19,7 +19,7 @@ def get_middle(img, fraction = 0.5):
     midRow = rowNum/2
     midCol = colNum/2
     # Take the middle one third of the image
-    croppedImg = img[0:rowNum, midCol-colOffset:midCol+colOffset]
+    croppedImg = img[0:rowNum, midCol-colInterval:midCol+colInterval]
     return croppedImg, colOffset
 
 # Returns   1. Segment centors (including two different paths)
