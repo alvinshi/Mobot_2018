@@ -106,7 +106,7 @@ class Mobot:
 		ratio = (float(radius + self.MOBOT_AXIS)) / radius
                 return ratio
 
-	def turn_left(self, radius = 20):
+	def turn_left(self, radius = 5):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
 		rspeed = max(self.lspeed, self.rspeed)
