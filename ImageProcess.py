@@ -6,7 +6,7 @@ import os
 import time
 import Threshold as th
 
-MODE = "f"  # image or video
+MODE = "video"  # image or video
 NUM_SEGS = 20   # Number of row slices
 IMG_FRACTION = 0.75  # fraction of the middle image
 
@@ -23,6 +23,7 @@ def get_middle(img, fraction = 0.5):
     return croppedImg, colOffset
 
 # Returns   1. Segment centors (including two different paths)
+#           2. bool whether it is at intersection state
 def row_segment_centers(img, NUM_SEGS, colOffset, CONNECTIVITY=8, AREA_THRESH=800):
     numSegs = NUM_SEGS
     numRows = img.shape[0]
@@ -30,10 +31,24 @@ def row_segment_centers(img, NUM_SEGS, colOffset, CONNECTIVITY=8, AREA_THRESH=80
     rowInterval = numRows/numSegs
     startRow = 0
     centroids = []
+    consecDiverge = 0
+    atIntersection = False
     for i in range(0, numSegs):
         imgSeg = img[startRow:startRow+rowInterval, 0:numCols]
         output = cv2.connectedComponentsWithStats(imgSeg, CONNECTIVITY, cv2.CV_32S)
         labelNum = output[0]
+        # check intersection
+        if (i < numSegs/2):
+            if labelNum == 2:
+                consecDiverge += 1
+            else:
+                consecDiverge = 0
+            if consecDiverge >= 4:
+                atIntersection = True
+            else:
+                atIntersection = False
+
+        # get centroids
         stats = output[2]
         for j in range(1, labelNum):    # Start from 1 to ignore background label
             if stats[j, cv2.CC_STAT_AREA] > AREA_THRESH:
@@ -41,6 +56,12 @@ def row_segment_centers(img, NUM_SEGS, colOffset, CONNECTIVITY=8, AREA_THRESH=80
                 y = int(output[3][j][1])+startRow
                 centroids.append((x, y))
         startRow += rowInterval
+
+    if (atIntersection):
+        print("at intersection")
+    else:
+        print("not at intersection")
+
     return centroids
 
 def image_process(img, NUM_SEGS, IMG_FRACTION):
