@@ -106,7 +106,7 @@ def image_process(img, seq_n, NUM_SEGS, IMG_FRACTION):
 
 def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 10):
     sumX = 0
-    if centroids != None:
+    if centroids != None and len(centroids) > 0:
         centroidNum = len(centroids)
         for centroid in centroids:
             sumX += centroid[0]
