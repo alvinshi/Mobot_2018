@@ -81,7 +81,10 @@ def row_segment_centers(img, NUM_SEGS, colOffset, CONNECTIVITY=8, AREA_THRESH=50
 
     return midCentroids, leftCentroids, rightCentroids, frameAtIntersection
 
-def image_process(img, NUM_SEGS, IMG_FRACTION):
+# Return the collections of centriods
+#        whether the image represents an intersection
+def image_process(img, seq_n, NUM_SEGS, IMG_FRACTION):
+    cv2.imwrite(str(seq) + "_in.jpg", img)
     img = cv2.GaussianBlur(img,(13,13),0)
     imgThreshed = th.thresholding(img)
     imgMiddle, colOffset = get_middle(imgThreshed, IMG_FRACTION)
@@ -95,8 +98,10 @@ def image_process(img, NUM_SEGS, IMG_FRACTION):
             cv2.circle(img, leftCentroids[i], 3, (0,255,0))
         for i in range(0,len(rightCentroids)):
             cv2.circle(img, rightCentroids[i], 7, (0,0,255))
-    cv2.imshow('imageThreshed',imgThreshed)
-    cv2.imshow('image', img)
+    # cv2.imshow('imageThreshed',imgThreshed)
+    # cv2.imshow('image', img)
+    cv2.imwrite(str(seq) + "_th.jpg", imgThreshed)
+    cv2.imwrite(str(seq) + "_out.jpg", img)
     return midCentroids, leftCentroids, rightCentroids, frameAtIntersection
 
 def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 30):
@@ -116,10 +121,11 @@ def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 30):
 # Called in the robot main loop
 # Takes in the image to be processed
 # Takes in last N frames of intersection state (to get rid of noise)
-# Takes in preferred side if at intersection
+# Takes in a list of choices, destructively modified the list
+# The sequence number of the image past in
 # return command and current "atIntersection" state
-def get_command(img, pastStates, preferredSide, NUM_SEGS, IMG_FRACTION):
-    midCentroids, leftCentroids, rightCentroids, frameAtIntersection = image_process(img, NUM_SEGS, IMG_FRACTION)
+def get_command(img, pastStates, choices, seq_n, NUM_SEGS = NUM_SEGS, IMG_FRACTION = IMG_FRACTION):
+    midCentroids, leftCentroids, rightCentroids, frameAtIntersection = image_process(img, seq_n, NUM_SEGS, IMG_FRACTION)
     width = img.shape[1]
     height = img.shape[0]
     imgCenter = (width/2, height/2)
@@ -127,6 +133,9 @@ def get_command(img, pastStates, preferredSide, NUM_SEGS, IMG_FRACTION):
         if not pastStates[i]:
             command = get_commandInfo(imgCenter, midCentroids)
             return command, frameAtIntersection
+
+    # Ready to make intersection decision
+    preferredSide = choices.pop(0)
     if preferredSide == "left":
         command = get_commandInfo(imgCenter, leftCentroids)
         return command, frameAtIntersection
@@ -144,14 +153,16 @@ def main():
 
     if MODE == "image":
         img = cv2.imread(PICTURE_FILE)
-        image_process(img, NUM_SEGS, IMG_FRACTION)
+        image_process(img, 0, NUM_SEGS, IMG_FRACTION)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     else:
         vid = cv2.VideoCapture(VIDEO_FILE)
+        seq_n = 0
         while True:
             ret, frame = vid.read()
-            image_process(frame, NUM_SEGS, IMG_FRACTION)
+            image_process(frame, seqn_n, NUM_SEGS, IMG_FRACTION)
+            seq_n += 1
             if cv2.waitKey(10) & 0xff == ord('q'):
                 break
 
