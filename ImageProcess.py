@@ -137,7 +137,8 @@ def get_command(img, pastStates, choices, seq_n, NUM_SEGS = NUM_SEGS, IMG_FRACTI
             return command, frameAtIntersection
 
     # Ready to make intersection decision
-    preferredSide = choices.pop(0)
+    if len(choices) > 0: preferredSide = choices.pop(0)
+    else: preferredSide = "left"
     if preferredSide == "left":
         command = get_commandInfo(imgCenter, leftCentroids)
         return command, frameAtIntersection

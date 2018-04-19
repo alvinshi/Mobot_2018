@@ -23,7 +23,7 @@ class VideoThread(threading.Thread):
                         ret, frame = self.cap.read()
                         data.img = frame
 
-m = Mobot(70)
+m = Mobot(50)
 
 # Variable initialization
 seq_n = 1
@@ -32,7 +32,7 @@ data = Struct()
 data.img = None
 data.stopped = False
 data.pastStates = []
-data.choices = [LEFT, LEFT]
+data.choices = [RIGHT, LEFT]
 
 
 v_thread = VideoThread(1, "Thread-1", data)
