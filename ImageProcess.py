@@ -104,7 +104,7 @@ def image_process(img, seq_n, NUM_SEGS, IMG_FRACTION):
     cv2.imwrite(str(seq_n) + "_out.jpg", img)
     return midCentroids, leftCentroids, rightCentroids, frameAtIntersection
 
-def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 30):
+def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 10):
     sumX = 0
     if centroids != None:
         centroidNum = len(centroids)
@@ -117,7 +117,7 @@ def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 30):
         else:
             command = "Straight"
         return command
-    return command = "Straight"
+    return "Straight"
 
 
 # Called in the robot main loop

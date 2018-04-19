@@ -23,7 +23,7 @@ class VideoThread(threading.Thread):
                         ret, frame = self.cap.read()
                         data.img = frame
 
-m = Mobot()
+m = Mobot(70)
 
 # Variable initialization
 seq_n = 1
@@ -45,7 +45,7 @@ try:
                 img = data.img
                 command, frameAtIntersection = ip.get_command(img, data.pastStates, data.choices, seq_n)
                 seq_n += 1
-                if (data.pastStates.count() == PAST_STATES): del data.pastStates[0]
+                if len(data.pastStates) == PAST_STATES: del data.pastStates[0]
                 data.pastStates.append(frameAtIntersection)
                 if command == "Straight": m.go_ahead()
                 elif command == "Left": m.turn_left()
