@@ -106,7 +106,7 @@ class Mobot:
 		ratio = (float(radius + self.MOBOT_AXIS)) / radius
                 return ratio
 
-	def turn_left(self, radius = 10):
+	def turn_left(self, radius = 8):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
 		rspeed = max(self.lspeed, self.rspeed)
@@ -118,7 +118,7 @@ class Mobot:
 		wiringpi.digitalWrite(self.IN4, self.HIGH)
 		self.state = "Turning Left"
 
-	def turn_right(self, radius = 10):
+	def turn_right(self, radius = 13):
 		self.go_stop()
 		ratio = self.turning_ratio(radius)
 		lspeed = max(self.lspeed, self.rspeed)
