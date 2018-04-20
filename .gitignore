@@ -108,3 +108,6 @@ videos
 # DS_store
 .DS_Store
 >>>>>>> a65250f9ce0b2e40e8ea51e37f27157563027086
+
+# .pyc
+*.pyc
