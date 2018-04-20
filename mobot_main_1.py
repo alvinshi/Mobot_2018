@@ -47,9 +47,9 @@ try:
                 seq_n += 1
                 if len(data.pastStates) == PAST_STATES: del data.pastStates[0]
                 data.pastStates.append(frameAtIntersection)
-                if command == 0: m.go_ahead()
-                elif command < 0: m.turn_left(command)
-                elif command > 0: m.turn_right(command)
+                if command == "Straight": m.go_ahead()
+                elif command == "Left": m.turn_left()
+                elif command == "Right": m.turn_right()
                 print("COMMAND: " + command)
                 print("Mobot State: " + m.state)
                 print("lspeed: " + str(m.lspeed))
