@@ -85,24 +85,24 @@ def row_segment_centers(img, NUM_SEGS, colOffset, CONNECTIVITY=8, AREA_THRESH=50
 # Return the collections of centriods
 #        whether the image represents an intersection
 def image_process(img, seq_n, NUM_SEGS, IMG_FRACTION):
-    cv2.imwrite(str(seq_n) + "_in.jpg", img)
+    #cv2.imwrite(str(seq_n) + "_in.jpg", img)
     img = cv2.GaussianBlur(img,(13,13),0)
     imgThreshed = th.thresholding(img)
     imgMiddle, colOffset = get_middle(imgThreshed, IMG_FRACTION)
     midCentroids, leftCentroids, rightCentroids, frameAtIntersection = row_segment_centers(imgMiddle, NUM_SEGS, colOffset)
 
     # Draw all
-    for i in range(0,len(midCentroids)):
-        cv2.circle(img, midCentroids[i], 5, (255,0,0))
-    if leftCentroids != None and rightCentroids != None:
-        for i in range(0,len(leftCentroids)):
-            cv2.circle(img, leftCentroids[i], 3, (0,255,0))
-        for i in range(0,len(rightCentroids)):
-            cv2.circle(img, rightCentroids[i], 7, (0,0,255))
+    #for i in range(0,len(midCentroids)):
+    #    cv2.circle(img, midCentroids[i], 5, (255,0,0))
+    #if leftCentroids != None and rightCentroids != None:
+    #    for i in range(0,len(leftCentroids)):
+    #        cv2.circle(img, leftCentroids[i], 3, (0,255,0))
+    #    for i in range(0,len(rightCentroids)):
+    #        cv2.circle(img, rightCentroids[i], 7, (0,0,255))
     # cv2.imshow('imageThreshed',imgThreshed)
     # cv2.imshow('image', img)
-    cv2.imwrite(str(seq_n) + "_th.jpg", imgThreshed)
-    cv2.imwrite(str(seq_n) + "_out.jpg", img)
+    # cv2.imwrite(str(seq_n) + "_th.jpg", imgThreshed)
+    # cv2.imwrite(str(seq_n) + "_out.jpg", img)
     return midCentroids, leftCentroids, rightCentroids, frameAtIntersection
 
 def get_commandInfo(imgCenter, centroids, STRAIGHT_TOL = 10):

@@ -23,7 +23,7 @@ class VideoThread(threading.Thread):
                         ret, frame = self.cap.read()
                         data.img = frame
 
-m = Mobot(50)
+m = Mobot(60)
 
 # Variable initialization
 seq_n = 1
@@ -50,10 +50,10 @@ try:
                 if command == "Straight": m.go_ahead()
                 elif command == "Left": m.turn_left()
                 elif command == "Right": m.turn_right()
-                print("COMMAND: " + command)
-                print("Mobot State: " + m.state)
-                print("lspeed: " + str(m.lspeed))
-                print("rspeed: " + str(m.rspeed))
+                #print("COMMAND: " + command)
+                #print("Mobot State: " + m.state)
+                #print("lspeed: " + str(m.lspeed))
+                #print("rspeed: " + str(m.rspeed))
 except KeyboardInterrupt:
         print("Ctrl + C received")
         data.stopped = True
